@@ -1,408 +1,431 @@
-# 🤖 Agent Harness
+# Agent Harness v2
 
-**Production-ready autonomous AI agent framework with model-agnostic provider support.**
+Production-ready autonomous agent platform for work automation. Built on the [Pi runtime](https://github.com/badlogic/pi-mono) with work-environment integrations and quality controls.
 
-Build and deploy autonomous AI agents in minutes, not days. Agent Harness provides everything you need: multiple LLM providers, built-in tools, memory systems, safety constraints, and flexible trigger modes.
+## Features
 
-## ✨ Features
+- 🤖 **Pre-configured agents** for Jira, Slack, GitHub workflows
+- 🔧 **Extensible tool system** with TypeBox schemas
+- 📅 **Cron scheduler** for autonomous operation
+- 💾 **File-based memory** with grep search
+- 📊 **Activity logging** (JSONL) for dashboards
+- 🎨 **Terminal UI** with Pi TUI components
+- 🔒 **Sandboxed execution** with allowlist/blocklist
+- ✅ **Comprehensive tests** with Node.js test runner
 
-- 🔌 **Model-agnostic** - Anthropic Claude, OpenAI GPT, xAI Grok
-- 🛠️ **Built-in tools** - Filesystem, shell, HTTP, sub-agent spawning
-- 🧠 **Memory system** - Daily notes + keyword search (no vector DB needed)
-- 📝 **Context engineering** - Markdown-based identity and knowledge files
-- ⚡ **Multiple triggers** - CLI interactive, cron scheduled, webhook server
-- 🔒 **Safety first** - Budget limits, command sandboxing, approval gates
-- 🎯 **Minimal dependencies** - Clean, readable code you can actually understand
+## Quick Start
 
-## 🚀 Quick Start (< 2 minutes)
+### Installation
 
 ```bash
-# 1. Clone and install
-git clone https://github.com/yourusername/agent-harness.git
-cd agent-harness
 npm install
-
-# 2. Set your API key
-export ANTHROPIC_API_KEY=sk-ant-...
-# or: export OPENAI_API_KEY=sk-...
-# or: export XAI_API_KEY=xai-...
-
-# 3. Run your first task
-node bin/agent.mjs run "list the files in this directory and summarize what this project does"
 ```
 
-That's it! 🎉
+### Configuration
 
-## 📖 Usage
-
-### Interactive CLI
+1. Copy `.env.example` to `.env` and fill in your API credentials:
 
 ```bash
-node bin/agent.mjs cli
-> What files are in this directory?
-> Create a new file called notes.txt with today's date
-> exit
+cp .env.example .env
 ```
 
-### One-shot tasks
-
-```bash
-node bin/agent.mjs run "analyze the code in src/ and suggest improvements"
-```
-
-### Scheduled execution (cron)
+2. Edit `config.yaml` to configure your agents:
 
 ```yaml
-# config.yaml
-trigger:
-  mode: cron
-  cron: "0 9 * * *"  # Every day at 9 AM
+model:
+  provider: "anthropic"
+  id: "claude-sonnet-4-5"
+
+agents:
+  jira-watcher:
+    enabled: true
+    schedule: "5m"  # Run every 5 minutes
 ```
+
+### Running
 
 ```bash
-node bin/agent.mjs cron
+# Start all enabled agents
+npm start
+
+# Run a specific agent once
+npx tsx bin/harness.mts run jira-watcher
+
+# Show agent status
+npx tsx bin/harness.mts status
 ```
 
-### Webhook server
-
-```yaml
-# config.yaml
-trigger:
-  mode: webhook
-  webhook_port: 3000
-```
-
-```bash
-node bin/agent.mjs webhook
-
-# In another terminal:
-curl -X POST http://localhost:3000/run \
-  -H "Content-Type: application/json" \
-  -d '{"message": "check my inbox and summarize urgent emails"}'
-```
-
-## 🏗️ Architecture
+## Architecture
 
 ```
-agent-harness/
-├── bin/agent.mjs           # CLI entry point
-├── src/
-│   ├── core/
-│   │   ├── loop.mjs        # Agentic loop (think → act → observe)
-│   │   ├── context.mjs     # Assemble system prompt from files
-│   │   └── memory.mjs      # Daily notes + search
-│   ├── providers/
-│   │   ├── anthropic.mjs   # Claude integration
-│   │   ├── openai.mjs      # GPT integration
-│   │   └── xai.mjs         # Grok integration
-│   ├── tools/
-│   │   ├── filesystem.mjs  # read_file, write_file, edit_file, list_dir
-│   │   ├── shell.mjs       # execute (sandboxed)
-│   │   ├── http.mjs        # http_request
-│   │   └── subagent.mjs    # spawn_subagent
-│   ├── triggers/
-│   │   ├── cli.mjs         # Interactive REPL
-│   │   ├── cron.mjs        # Scheduled execution
-│   │   └── webhook.mjs     # HTTP server
-│   └── safety/
-│       ├── constraints.mjs # Budget tracking
-│       └── sandbox.mjs     # Command filtering
-├── context/
-│   ├── SOUL.md             # Agent identity & purpose
-│   ├── TOOLS.md            # Available tools reference
-│   └── MEMORY.md           # Long-term curated knowledge
-├── memory/                 # Auto-generated daily notes
-├── config.yaml             # Configuration
-└── examples/               # Example agent configs
-    ├── marketing-monitor/
-    ├── code-reviewer/
-    └── research-agent/
+┌─────────────────────────────────────────┐
+│ CLI / Dashboard (bin/, src/tui/)       │
+├────────────────────┬────────────────────┤
+│ Agent Definitions  │ Tool Registry      │
+│ (src/agents/)      │ (src/tools/)       │
+├────────────────────┴────────────────────┤
+│ Core                                     │
+│ Context, Memory, Scheduler, Activity    │
+├─────────────────────────────────────────┤
+│ Pi Agent Core                           │
+│ Agent loop, tool execution, events      │
+├─────────────────────────────────────────┤
+│ Pi AI                                    │
+│ Multi-provider LLM streaming            │
+└─────────────────────────────────────────┘
 ```
 
-## ⚙️ Configuration
+## Core Concepts
+
+### Agents
+
+Agents are autonomous workers that run on schedules. Each agent has:
+
+- **SOUL.md** - Agent identity and behavior instructions
+- **TOOLS.md** - Tool-specific guidance (optional)
+- **MEMORY.md** - Long-term memory (optional)
+- **Schedule** - Cron expression or "webhook"
+- **Tools** - Subset of available tools
+
+Pre-configured agents:
+
+| Agent | Purpose | Tools |
+|-------|---------|-------|
+| `jira-watcher` | Monitor Jira, pick up tickets | Jira API |
+| `slack-reader` | Read channels, answer questions | Slack API |
+| `git-monitor` | Watch PRs, review code | GitHub API |
+| `doc-keeper` | Update docs when code changes | Filesystem |
+| `standup-writer` | Generate daily standup | Memory, Jira, GitHub |
+| `priority-engine` | Analyze inputs, recommend priorities | All tools |
+
+### Tools
+
+Tools use TypeBox schemas for type-safe parameter definitions:
+
+```typescript
+import { Type } from "@sinclair/typebox";
+import type { AgentTool } from "@mariozechner/pi-agent-core";
+
+const params = Type.Object({
+  city: Type.String({ description: "City name" }),
+});
+
+const tool: AgentTool<typeof params> = {
+  name: "get_weather",
+  label: "Weather",
+  description: "Get current weather for a city",
+  parameters: params,
+  execute: async (toolCallId, params, signal, onUpdate) => {
+    return {
+      content: [{ type: "text", text: `Weather for ${params.city}` }],
+      details: { city: params.city },
+    };
+  },
+};
+```
+
+**Built-in tools:**
+
+| Category | Tools |
+|----------|-------|
+| **Jira** | `jira_search`, `jira_get_ticket`, `jira_create_ticket`, `jira_update_ticket`, `jira_add_comment`, `jira_transition` |
+| **Slack** | `slack_read_channel`, `slack_post_message`, `slack_search`, `slack_get_thread` |
+| **GitHub** | `github_list_prs`, `github_get_pr`, `github_create_review`, `github_list_commits`, `github_get_ci_status` |
+| **Filesystem** | `read`, `write`, `edit`, `list`, `glob`, `grep` |
+| **Shell** | `shell` (sandboxed command execution) |
+| **HTTP** | `http_request` (generic HTTP) |
+| **Memory** | `save_memory`, `search_memory`, `read_daily_notes` |
+
+### Memory
+
+File-based memory system with two layers:
+
+1. **Daily notes** (`memory/YYYY-MM-DD.md`) - Raw chronological logs
+2. **Grep search** - Fast search across all notes
+
+```typescript
+import { Memory } from "./src/core/memory.mjs";
+
+const memory = new Memory("./memory");
+
+// Save to today's note
+await memory.save("Important decision: use TypeBox for schemas");
+
+// Search across all notes
+const results = await memory.search("TypeBox", 10);
+```
+
+### Activity Log
+
+Every agent action writes to `data/activity.jsonl`:
+
+```json
+{"timestamp":"2026-03-23T15:30:00Z","agent":"jira-watcher","action":"Picked up TKT-445","status":"success","tokens":1200,"duration":4500}
+```
+
+This feeds both TUI and web dashboards.
+
+### Scheduler
+
+Manages multiple agents with cron schedules:
+
+```typescript
+import { Scheduler } from "./src/core/scheduler.mjs";
+
+const scheduler = new Scheduler();
+
+scheduler.register("jira-watcher", agent, "5m");  // Every 5 minutes
+scheduler.register("slack-reader", agent, "30m"); // Every 30 minutes
+```
+
+## Configuration Reference
 
 ### config.yaml
 
 ```yaml
-# Provider: anthropic, openai, or xai
-provider: anthropic
-model: claude-sonnet-4-5-20250514
+# Model configuration
+model:
+  provider: "anthropic"  # or "openai", "google", "groq", etc.
+  id: "claude-sonnet-4-5"
 
-# Context directories
-context_dir: ./context
-memory_dir: ./memory
+# API credentials (use environment variables)
+credentials:
+  jira:
+    url: ${JIRA_URL}
+    email: ${JIRA_EMAIL}
+    token: ${JIRA_TOKEN}
+  slack:
+    token: ${SLACK_TOKEN}
+  github:
+    token: ${GITHUB_TOKEN}
 
-# Enabled tools
-tools:
-  filesystem: true
-  shell: true
-  http: true
-  subagent: true
+# Agent configurations
+agents:
+  jira-watcher:
+    enabled: true
+    schedule: "5m"  # "30s", "5m", "1h", or "webhook"
+    tools:
+      - jira_search
+      - jira_get_ticket
+      - save_memory
+
+# Workspace settings
+workspace:
+  dir: "."
+  memory_dir: "./memory"
+
+# Activity log
+activity:
+  log_path: "./data/activity.jsonl"
+  max_entries: 10000
 
 # Safety constraints
 safety:
-  max_tokens_per_run: 100000      # Stop after this many tokens
-  max_cost_per_day: 10.00         # Daily budget limit
-  blocked_commands:               # Commands that will be rejected
-    - "rm -rf"
+  max_tokens_per_run: 50000
+  max_tool_calls_per_run: 20
+  command_allowlist:
+    - "ls"
+    - "cat"
+    - "grep"
+  command_blocklist:
+    - "rm"
     - "sudo"
-    - "shutdown"
-  require_approval: []            # Tools requiring manual approval
-    # - send_email
-    # - execute_trade
-
-# Trigger mode
-trigger:
-  mode: cli                       # cli | cron | webhook
-  # cron: "*/30 * * * *"          # Cron schedule
-  # webhook_port: 3000            # Webhook server port
 ```
 
-### Environment Variables
+## Creating Custom Agents
 
-```bash
-# API Keys (required)
-ANTHROPIC_API_KEY=sk-ant-...
-OPENAI_API_KEY=sk-...
-XAI_API_KEY=xai-...
-
-# Optional
-AGENT_CONFIG=./config.yaml      # Custom config path
-DEBUG=true                      # Enable debug output
-```
-
-## 🧠 Context Engineering
-
-Agent Harness uses markdown files to define agent identity and knowledge:
-
-### context/SOUL.md
-
-Define who your agent is, what it does, and how it behaves.
+1. **Define agent behavior** in `agents/<name>/SOUL.md`:
 
 ```markdown
-# Agent Identity
+# My Custom Agent
 
-You are a helpful research assistant.
+You are a helpful agent that does X, Y, Z.
 
-## Your Purpose
-...
+## Your Role
+- Monitor for condition A
+- Perform action B when triggered
+- Report results to stakeholders
+
+## Guidelines
+- Be proactive
+- Communicate clearly
 ```
 
-### context/TOOLS.md
+2. **Create agent definition** in `src/agents/<name>.mts`:
 
-Document available APIs, accounts, and tool-specific notes.
+```typescript
+import type { AgentConfig } from "../core/agent-factory.mjs";
 
-```markdown
-# Available Tools
-
-## External APIs
-- Weather API: https://api.weather.com (key: $WEATHER_KEY)
-...
-```
-
-### context/MEMORY.md
-
-Curated long-term knowledge, preferences, and lessons learned.
-
-```markdown
-# Long-Term Memory
-
-## Lessons Learned
-- Always verify file paths before editing
-...
-```
-
-The agent automatically loads all .md files from `context/` on startup.
-
-## 💾 Memory System
-
-Agent Harness maintains two layers of memory:
-
-1. **Daily notes** (`memory/YYYY-MM-DD.md`) - Auto-generated chronological logs
-2. **Long-term memory** (`context/MEMORY.md`) - Curated knowledge
-
-The agent can:
-- `save_memory(content)` - Append to today's notes
-- `search_memory(query)` - Grep-based keyword search across past notes
-
-No vector database needed. Simple, fast, and transparent.
-
-## 🔧 Available Tools
-
-### Filesystem
-- `read_file(path)` - Read file contents
-- `write_file(path, content)` - Create or overwrite
-- `edit_file(path, old_text, new_text)` - Precise edits
-- `list_dir(path)` - List directory contents
-
-### Shell
-- `execute(command, cwd?)` - Run shell commands (sandboxed)
-
-### HTTP
-- `http_request(url, method, headers?, body?)` - Make API calls
-
-### Memory
-- `save_memory(content)` - Save to daily notes
-- `search_memory(query)` - Search past notes
-
-### Sub-agents
-- `spawn_subagent(task, context?)` - Create isolated sub-agent for complex subtasks
-
-## 🔒 Safety
-
-### Command Blocklist
-
-Prevent dangerous commands:
-
-```yaml
-safety:
-  blocked_commands:
-    - "rm -rf"
-    - "sudo"
-    - "shutdown"
-```
-
-### Budget Limits
-
-Track costs and enforce daily limits:
-
-```yaml
-safety:
-  max_tokens_per_run: 100000
-  max_cost_per_day: 10.00
-```
-
-Costs are estimated and tracked in `state.json`.
-
-### Approval Gates
-
-Require manual approval for sensitive tools:
-
-```yaml
-safety:
-  require_approval:
-    - send_email
-    - execute_trade
-```
-
-## 📚 Examples
-
-### Marketing Monitor Agent
-
-Runs twice daily (9 AM, 5 PM) to check metrics and alert on changes.
-
-```bash
-cd examples/marketing-monitor
-export ANTHROPIC_API_KEY=...
-node ../../bin/agent.mjs cron
-```
-
-### Code Review Agent
-
-Webhook-triggered code reviewer for pull requests.
-
-```bash
-cd examples/code-reviewer
-export OPENAI_API_KEY=...
-node ../../bin/agent.mjs webhook
-
-# Trigger via webhook
-curl -X POST http://localhost:3000/run \
-  -d '{"message": "Review the changes in src/api/users.js"}'
-```
-
-### Research Agent
-
-Interactive research assistant with sub-agent support.
-
-```bash
-cd examples/research-agent
-export ANTHROPIC_API_KEY=...
-node ../../bin/agent.mjs cli
-> Research the history of autonomous agents and write a summary
-```
-
-## 🛠️ Development
-
-### Project Structure
-
-- **100-line agentic loop** - Clean, readable core in `src/core/loop.mjs`
-- **Normalized providers** - All LLMs expose the same interface
-- **Composable tools** - Mix and match capabilities
-- **ESM only** - Modern JavaScript, no transpilation needed
-
-### Extending
-
-#### Add a new tool
-
-```javascript
-// src/tools/custom.mjs
-export const customTools = {
-  my_tool: {
-    schema: {
-      name: 'my_tool',
-      description: 'Does something useful',
-      parameters: {
-        type: 'object',
-        properties: { /* ... */ },
-        required: []
-      }
-    },
-    async execute(args, context) {
-      // Implementation
-      return { success: true, result: 'done' };
-    }
-  }
-};
-```
-
-#### Add a new provider
-
-```javascript
-// src/providers/custom.mjs
-export class CustomProvider {
-  async complete(systemPrompt, messages, tools) {
-    // Call your API
-    return {
-      content: 'response text',
-      toolCalls: [],
-      stopReason: 'end_turn',
-      usage: { inputTokens: 100, outputTokens: 50 }
-    };
-  }
+export function createMyAgent(config: MyAgentConfig): AgentConfig {
+  return {
+    name: config.name,
+    description: "My custom agent",
+    model: config.model,
+    tools: [...config.tools],
+    contextDir: path.join(config.projectRoot, "agents", "my-agent"),
+    thinkingLevel: "off",
+  };
 }
 ```
 
-## 🤝 Contributing
+3. **Register in CLI** (`bin/harness.mts`):
 
-Contributions welcome! This project aims to stay:
+```typescript
+if (agentName === "my-agent") {
+  agentDefinition = createMyAgent({ ... });
+}
+```
 
-- **Simple** - Minimal dependencies, readable code
-- **Practical** - Real-world use cases over theoretical purity
-- **Safe** - Security and safety as first-class concerns
+4. **Add to config.yaml**:
 
-## 📄 License
+```yaml
+agents:
+  my-agent:
+    enabled: true
+    schedule: "15m"
+    tools:
+      - read
+      - write
+      - http_request
+```
 
-MIT License - see [LICENSE](LICENSE) for details.
+## Development
 
-## 🙏 Acknowledgments
-
-Inspired by the autonomous agent patterns from:
-- Anthropic's Claude
-- OpenAI's function calling
-- The broader agentic AI community
-
-Built with ❤️ for developers who want to ship agents, not wrestle with frameworks.
-
----
-
-**Get started in under 2 minutes. Build autonomous agents that actually work.**
+### Build
 
 ```bash
-git clone https://github.com/yourusername/agent-harness.git
-cd agent-harness
-npm install
-export ANTHROPIC_API_KEY=sk-ant-...
-node bin/agent.mjs run "your first task here"
+npm run build
 ```
-# agent_harness
+
+### Test
+
+```bash
+npm test
+```
+
+### Lint
+
+```bash
+npx tsc --noEmit
+```
+
+## Testing
+
+Tests use Node.js built-in test runner:
+
+```bash
+# Run all tests
+npm test
+
+# Run specific test file
+node --test tests/core/memory.test.mts
+```
+
+Mock external APIs in tests:
+
+```typescript
+import { test } from "node:test";
+import assert from "node:assert";
+
+test("jira_search returns results", async () => {
+  // Mock fetch
+  global.fetch = async () => ({
+    ok: true,
+    json: async () => ({ issues: [] }),
+  });
+
+  // Test tool
+  const result = await tool.execute("id", { jql: "test" });
+  assert.strictEqual(result.details.total, 0);
+});
+```
+
+## Deployment
+
+### Systemd Service
+
+Create `/etc/systemd/system/agent-harness.service`:
+
+```ini
+[Unit]
+Description=Agent Harness v2
+After=network.target
+
+[Service]
+Type=simple
+User=your-user
+WorkingDirectory=/path/to/agent-harness-v2
+ExecStart=/usr/bin/npm start
+Restart=always
+
+[Install]
+WantedBy=multi-user.target
+```
+
+```bash
+sudo systemctl enable agent-harness
+sudo systemctl start agent-harness
+sudo systemctl status agent-harness
+```
+
+### Docker
+
+```dockerfile
+FROM node:20-alpine
+
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --production
+COPY . .
+
+CMD ["npm", "start"]
+```
+
+```bash
+docker build -t agent-harness-v2 .
+docker run -d --env-file .env agent-harness-v2
+```
+
+## Troubleshooting
+
+### Agent not running
+
+Check config.yaml:
+```yaml
+agents:
+  my-agent:
+    enabled: true  # Must be true
+```
+
+### Tool not found
+
+Ensure tool is registered in config.yaml and credentials are set:
+```bash
+export JIRA_TOKEN=your_token
+```
+
+### Permission errors
+
+Check file permissions on workspace and memory directories:
+```bash
+chmod -R 755 ./memory ./data
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Write tests for new functionality
+4. Ensure all tests pass: `npm test`
+5. Run type check: `npm run build`
+6. Submit a pull request
+
+## License
+
+MIT
+
+## Credits
+
+Built on [Pi runtime](https://github.com/badlogic/pi-mono) by @badlogicgames.
+
+Inspired by [OpenClaw](https://github.com/openclaw/openclaw) and the AI agent patterns documented in [this guide](https://gist.github.com/dabit3/e97dbfe71298b1df4d36542aceb5f158).

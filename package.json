@@ -1,36 +1,46 @@
 {
-  "name": "agent-harness",
-  "version": "1.0.0",
-  "description": "Production-ready autonomous AI agent harness with model-agnostic provider support",
+  "name": "agent-harness-v2",
+  "version": "2.0.0",
+  "description": "Production-ready autonomous agent platform for work automation",
   "type": "module",
+  "main": "./dist/src/index.js",
+  "types": "./dist/src/index.d.ts",
   "bin": {
-    "agent-harness": "./bin/agent.mjs"
+    "harness": "./bin/harness.mts"
   },
-  "main": "./src/index.mjs",
-  "exports": "./src/index.mjs",
   "scripts": {
-    "test": "node --test",
-    "start": "node bin/agent.mjs"
+    "build": "tsc --noEmit",
+    "test": "node --test tests/**/*.test.mts",
+    "start": "tsx bin/harness.mts start",
+    "dev": "tsx --watch bin/harness.mts"
   },
   "keywords": [
-    "ai",
     "agent",
-    "autonomous",
-    "llm",
-    "claude",
-    "openai",
-    "grok"
+    "automation",
+    "ai",
+    "workflow",
+    "jira",
+    "slack",
+    "github"
   ],
-  "author": "",
+  "author": "Agent Harness Team",
   "license": "MIT",
-  "dependencies": {
-    "@anthropic-ai/sdk": "^0.32.1",
-    "openai": "^4.76.0",
-    "yaml": "^2.6.1",
-    "express": "^4.21.2",
-    "node-cron": "^3.0.3"
-  },
   "engines": {
-    "node": ">=18.0.0"
+    "node": ">=20.0.0"
+  },
+  "dependencies": {
+    "@mariozechner/pi-agent-core": "^0.62.0",
+    "@mariozechner/pi-ai": "^0.62.0",
+    "@mariozechner/pi-tui": "^0.62.0",
+    "@sinclair/typebox": "^0.34.48",
+    "ajv": "^8.18.0",
+    "ajv-formats": "^3.0.1",
+    "chalk": "^5.6.2",
+    "tsx": "^4.21.0",
+    "yaml": "^2.8.3"
+  },
+  "devDependencies": {
+    "@types/node": "^25.5.0",
+    "typescript": "^5.9.3"
   }
 }

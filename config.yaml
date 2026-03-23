@@ -1,39 +1,73 @@
-# Agent Harness Configuration
+# Agent Harness v2 Configuration
 
-# Provider: anthropic, openai, or xai
-provider: anthropic
+# Model configuration
+model:
+  provider: "anthropic"
+  id: "claude-sonnet-4-5"
 
-# Model name (provider-specific)
-model: claude-sonnet-4-5-20250514
-# model: gpt-4o           # for OpenAI
-# model: grok-beta        # for xAI
+# API credentials (use environment variables)
+credentials:
+  jira:
+    url: ${JIRA_URL}
+    email: ${JIRA_EMAIL}
+    token: ${JIRA_TOKEN}
+  slack:
+    token: ${SLACK_TOKEN}
+  github:
+    token: ${GITHUB_TOKEN}
 
-# Context directories
-context_dir: ./context
-memory_dir: ./memory
+# Agent configurations
+agents:
+  jira-watcher:
+    enabled: true
+    schedule: "5m" # Run every 5 minutes
+    tools:
+      - jira_search
+      - jira_get_ticket
+      - jira_create_ticket
+      - jira_update_ticket
+      - jira_add_comment
+      - jira_transition
+      - save_memory
+      - search_memory
 
-# Enabled tools
-tools:
-  filesystem: true
-  shell: true
-  http: true
-  subagent: true
+  slack-reader:
+    enabled: false
+    schedule: "30m"
+    tools:
+      - slack_read_channel
+      - slack_post_message
+      - save_memory
+
+  git-monitor:
+    enabled: false
+    schedule: "15m"
+    tools:
+      - github_list_prs
+      - github_get_pr
+      - github_create_review
+      - save_memory
+
+# Workspace settings
+workspace:
+  dir: "."
+  memory_dir: "./memory"
+
+# Activity log
+activity:
+  log_path: "./data/activity.jsonl"
+  max_entries: 10000
 
 # Safety constraints
 safety:
-  max_tokens_per_run: 100000
-  max_cost_per_day: 10.00
-  blocked_commands:
-    - "rm -rf"
+  max_tokens_per_run: 50000
+  max_tool_calls_per_run: 20
+  command_allowlist:
+    - "ls"
+    - "cat"
+    - "grep"
+    - "find"
+  command_blocklist:
+    - "rm"
     - "sudo"
-    - "shutdown"
-    - "mkfs"
-  require_approval: []
-    # - send_email
-    # - execute_trade
-
-# Trigger mode
-trigger:
-  mode: cli              # cli | cron | webhook
-  # cron: "*/30 * * * *" # Every 30 minutes
-  # webhook_port: 3000   # Port for webhook server
+    - "dd"

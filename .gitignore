@@ -1,7 +1,0 @@
-node_modules/
-.env
-*.log
-memory/*.md
-!memory/.gitkeep
-state.json
-.DS_Store
