@@ -1,0 +1,7 @@
+test-structure.mjs
+examples/
+.env
+*.log
+state.json
+memory/*.md
+!memory/.gitkeep

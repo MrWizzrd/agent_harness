@@ -1,0 +1,20 @@
+provider: anthropic
+model: claude-sonnet-4-5-20250514
+
+context_dir: ./context
+memory_dir: ./memory
+
+tools:
+  filesystem: true
+  shell: false
+  http: true
+  subagent: true
+
+safety:
+  max_tokens_per_run: 150000
+  max_cost_per_day: 20.00
+  blocked_commands: []
+  require_approval: []
+
+trigger:
+  mode: cli

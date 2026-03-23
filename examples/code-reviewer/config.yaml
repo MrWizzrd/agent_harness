@@ -1,0 +1,23 @@
+provider: openai
+model: gpt-4o
+
+context_dir: ./context
+memory_dir: ./memory
+
+tools:
+  filesystem: true
+  shell: true
+  http: true
+  subagent: true
+
+safety:
+  max_tokens_per_run: 100000
+  max_cost_per_day: 15.00
+  blocked_commands:
+    - "rm -rf"
+    - "sudo"
+  require_approval: []
+
+trigger:
+  mode: webhook
+  webhook_port: 3000

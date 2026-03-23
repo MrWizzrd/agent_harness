@@ -1,0 +1,39 @@
+# Agent Harness Configuration
+
+# Provider: anthropic, openai, or xai
+provider: anthropic
+
+# Model name (provider-specific)
+model: claude-sonnet-4-5-20250514
+# model: gpt-4o           # for OpenAI
+# model: grok-beta        # for xAI
+
+# Context directories
+context_dir: ./context
+memory_dir: ./memory
+
+# Enabled tools
+tools:
+  filesystem: true
+  shell: true
+  http: true
+  subagent: true
+
+# Safety constraints
+safety:
+  max_tokens_per_run: 100000
+  max_cost_per_day: 10.00
+  blocked_commands:
+    - "rm -rf"
+    - "sudo"
+    - "shutdown"
+    - "mkfs"
+  require_approval: []
+    # - send_email
+    # - execute_trade
+
+# Trigger mode
+trigger:
+  mode: cli              # cli | cron | webhook
+  # cron: "*/30 * * * *" # Every 30 minutes
+  # webhook_port: 3000   # Port for webhook server

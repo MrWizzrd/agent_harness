@@ -1,0 +1,36 @@
+{
+  "name": "agent-harness",
+  "version": "1.0.0",
+  "description": "Production-ready autonomous AI agent harness with model-agnostic provider support",
+  "type": "module",
+  "bin": {
+    "agent-harness": "./bin/agent.mjs"
+  },
+  "main": "./src/index.mjs",
+  "exports": "./src/index.mjs",
+  "scripts": {
+    "test": "node --test",
+    "start": "node bin/agent.mjs"
+  },
+  "keywords": [
+    "ai",
+    "agent",
+    "autonomous",
+    "llm",
+    "claude",
+    "openai",
+    "grok"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "@anthropic-ai/sdk": "^0.32.1",
+    "openai": "^4.76.0",
+    "yaml": "^2.6.1",
+    "express": "^4.21.2",
+    "node-cron": "^3.0.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
